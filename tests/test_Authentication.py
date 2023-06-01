@@ -5,7 +5,14 @@ import time
 from selenium.webdriver.common.by import By
 
 import util
-
+# import os
+# import sys
+#
+# # Get the root directory of your project
+# root_dir = os.path.dirname(os.path.abspath(__file__))
+#
+# # Add the root directory to sys.path
+# sys.path.append(root_dir)
 
 class Authentication:
 
@@ -15,13 +22,12 @@ class Authentication:
         self.password = "testo"
 
     # @pytest
-    def test_login_from_main_page(self):
-        driver = util.get_driver("--")
+    def test_login_from_main_page(self, request):
+        driver = util.get_driver(request, "--headless2")
         result = self.login(driver, self.remote_url)
 
-        time.sleep(200)
         driver.close()
-        assert result
+        return result
 
     def login(self, driver, remote_url, mail=None, password=None):
         if remote_url is None:
@@ -55,5 +61,5 @@ class Authentication:
         return len(driver.find_elements(By.CSS_SELECTOR, "a.logout")) > 0
 
 
-def test_login_from_main_page():
-    Authentication().test_login_from_main_page()
+def test_login_from_main_page(request):
+    assert Authentication().test_login_from_main_page(request)
