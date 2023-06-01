@@ -3,7 +3,7 @@ import pytest
 import time
 from selenium.webdriver.common.by import By
 
-from tests.test_Authentication import Authentication
+from tests.Authentication import Authentication
 
 
 class Bucket:
@@ -13,11 +13,8 @@ class Bucket:
         self.remote_url = 'https://demo.prestamoduleshop.com/cs/'
         self.bucket = []
 
-    def test_buy_items(self, request):
-        driver = util.get_driver(request, "")
+    def items_adds_to_bucket_test(self, driver):
         result = self.bucket_items(driver, self.remote_url)
-
-        driver.close()
         assert result
 
     def bucket_items(self, driver, remote_url):
@@ -25,11 +22,11 @@ class Bucket:
             remote_url = self.remote_url
         if driver is None:
             return False
-        # login
-        Authentication().login(driver, remote_url)
+
         if not Authentication.is_authenticated(driver):
             return False
 
+        driver.get(remote_url)
         # open clothes category
         driver.find_element(By.CSS_SELECTOR, "li#category-3 > a").click()
 
@@ -104,7 +101,8 @@ class Bucket:
             result = result and product in items_as_products
         return result
 
-    def to_products(self, items):
+    @staticmethod
+    def to_products(items):
         products = []
         for item in items:
             name = item.find_element(By.CSS_SELECTOR, "div.product-line-info > a").text
@@ -114,6 +112,3 @@ class Bucket:
             products.append({'name': name, 'size': size, 'amount': amount})
         return products
 
-
-def test_buy_items(request):
-    Bucket().test_buy_items(request)

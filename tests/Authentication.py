@@ -15,18 +15,15 @@ import util
 # sys.path.append(root_dir)
 
 class Authentication:
-
+    """ Tests if logining is possible [for a given user.]"""
     def __init__(self):
         self.remote_url = 'https://demo.prestamoduleshop.com/cs/'
         self.mail = "testo@cesto.cz"
         self.password = "testo"
 
     # @pytest
-    def test_login_from_main_page(self, request):
-        driver = util.get_driver(request, "--headless2")
-        result = self.login(driver, self.remote_url)
-
-        driver.close()
+    def test_login_from_main_page(self, driver, mail=None, password=None):
+        result = self.login(driver, self.remote_url, mail, password)
         return result
 
     def login(self, driver, remote_url, mail=None, password=None):
