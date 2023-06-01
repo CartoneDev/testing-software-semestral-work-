@@ -16,9 +16,10 @@ class Authentication:
 
     # @pytest
     def test_login_from_main_page(self):
-        driver = util.get_driver("--headless")
+        driver = util.get_driver("--")
         result = self.login(driver, self.remote_url)
 
+        time.sleep(200)
         driver.close()
         assert result
 
@@ -40,7 +41,14 @@ class Authentication:
         password_input_field.send_keys(password)
         login_button = driver.find_element(By.ID, "submit-login")
         login_button.click()
+        self.cookie_clicker(driver)
         return self.is_authenticated(driver)
+
+    @staticmethod
+    def cookie_clicker(driver):
+        cookies = driver.find_elements(By.ID, "cookie_accept")
+        if len(cookies) > 0:
+            cookies[0].click()
 
     @staticmethod
     def is_authenticated(driver):
