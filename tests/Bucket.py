@@ -26,13 +26,7 @@ class Bucket:
         if not Authentication.is_authenticated(driver):
             return False
 
-        driver.get(remote_url)
-        # open clothes category
-        driver.find_element(By.CSS_SELECTOR, "li#category-3 > a").click()
-
-        # open second item
-        element = driver.find_element(By.XPATH, '//article[@data-id-product="2"]/div/a')
-        element.click()
+        self.open_product_page(driver, remote_url)
         product_name = self.extract_product_name(driver)
 
         product = {'name': product_name, 'size': 'L', 'amount': 5}
@@ -44,6 +38,15 @@ class Bucket:
         self.bucket.append(product)
 
         return self.bucketContainsProducts(driver)
+
+    def open_product_page(self, driver, remote_url):
+        driver.get(remote_url)
+        util.cookie_clicker(driver)
+        # open clothes category
+        driver.find_element(By.CSS_SELECTOR, "li#category-3 > a").click()
+        # open second item
+        element = driver.find_element(By.XPATH, '//article[@data-id-product="2"]/div/a')
+        element.click()
 
     @staticmethod
     def selectProductSize(driver, size):
@@ -59,6 +62,11 @@ class Bucket:
         xpath_expression = f"//input[@class='input-color' and @value='{color_value}']"
         color_select = driver.find_element(By.XPATH, xpath_expression)
         color_select.click()
+
+    @staticmethod
+    def getAmount(driver):
+        quantity = driver.find_element(By.ID, "quantity_wanted")
+        return int(quantity.get_attribute("value"))
 
     @staticmethod
     def selectAmount(driver, param):
@@ -111,4 +119,14 @@ class Bucket:
             amount = int(amountElem.get_attribute("value"))
             products.append({'name': name, 'size': size, 'amount': amount})
         return products
+
+    #input changes even in case of attempt to immidiatly add to cart
+    def selecting_less_than_1_items_to_add_to_bucket_test(self, driver, amount):
+        self.open_product_page(driver, self.remote_url)
+        self.selectAmount(driver, amount)
+        # self.addToCart(driver)
+        driver.find_element(By.CSS_SELECTOR, "body").click() # emulate user activity, allowing js to update input
+        return self.getAmount(driver)
+
+
 
