@@ -1,7 +1,10 @@
+from selenium.webdriver.support.wait import WebDriverWait
+
 import util
 import pytest
 import time
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 
 from tests.Authentication import Authentication
 
@@ -77,13 +80,22 @@ class Bucket:
     @staticmethod
     def addToCart(driver):
         add_to_cart_button = driver.find_element(By.CSS_SELECTOR, "div.add > button[type='Submit']")
-        add_to_cart_button.click()
+        if add_to_cart_button.is_enabled():
+            add_to_cart_button.click()
+        else:
+            return
 
         # wait for modal window
         while len(driver.find_elements(By.CSS_SELECTOR, "div#blockcart-modal")) == 0:
-            time.sleep(4)
+            driver.implicitly_wait(0.01)
+        element = driver.find_element(By.XPATH, "//button[contains(@class, 'close')]")
+        while not element.is_displayed() or not element.is_enabled():
+            driver.implicitly_wait(0.01)
+            element = driver.find_element(By.XPATH, "//button[contains(@class, 'close')]")
         # close modal window
-        driver.find_element(By.XPATH, "//button[contains(@class, 'close')]").click()
+        element.click()
+        wait = WebDriverWait(driver, 3)
+        wait.until(EC.invisibility_of_element_located((By.CLASS_NAME, "modal")))
 
     @staticmethod
     def extract_product_name(driver):
@@ -120,13 +132,35 @@ class Bucket:
             products.append({'name': name, 'size': size, 'amount': amount})
         return products
 
-    #input changes even in case of attempt to immidiatly add to cart
+    # input changes even in case of attempt to immidiatly add to cart
     def selecting_less_than_1_items_to_add_to_bucket_test(self, driver, amount):
         self.open_product_page(driver, self.remote_url)
         self.selectAmount(driver, amount)
         # self.addToCart(driver)
-        driver.find_element(By.CSS_SELECTOR, "body").click() # emulate user activity, allowing js to update input
+        driver.find_element(By.CSS_SELECTOR, "body").click()  # emulate user activity, allowing js to update input
         return self.getAmount(driver)
 
+    def item_overflow_in_shopping_cart_test(self, driver):
+        self.clean_shopping_cart(driver)
+        self.open_product_page(driver, self.remote_url)
+        quantity = self.get_product_quantity(driver)
+        self.selectAmount(driver, quantity + 123)
+        self.addToCart(driver)
 
+        return len(driver.find_elements(By.CSS_SELECTOR, "span#product-availability > i.product-unavailable")) > 0
 
+    def clean_shopping_cart(self, driver):
+        cart = driver.find_elements(By.CSS_SELECTOR, "div.cart > a")
+        if len(cart) == 0:
+            return
+
+        cart[0].click()
+        driver.find_element(By.CSS_SELECTOR, "div.blockcart a").click()
+        for item in driver.find_elements(By.CSS_SELECTOR, "a.remove-from-cart"):
+            item.click()
+
+    def get_product_quantity(self, driver):
+        xpath = '//a[@class="nav-link" and @data-toggle="tab" and @href="#product-details"]'
+        driver.find_element(By.XPATH, xpath).click()
+        quantity = driver.find_element(By.CSS_SELECTOR, "div.product-quantities > span").get_attribute("data-stock")
+        return int(quantity)

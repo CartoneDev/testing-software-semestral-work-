@@ -16,10 +16,13 @@ def shared_data(request):
 def test_login_from_main_page(driver):
     assert Authentication().test_login_from_main_page(driver)
 
-
+@pytest.mark.run(order=2)
 def test_bucket_items(driver):
     assert Bucket().items_adds_to_bucket_test(driver)
 
+
+def test_item_overflow_in_shopping_cart(driver):
+    assert Bucket().item_overflow_in_shopping_cart_test(driver)
 
 def test_selecting_less_than_1_items_to_add_to_bucket(driver):
     assert Bucket().selecting_less_than_1_items_to_add_to_bucket_test(driver, -1) > 0
