@@ -15,7 +15,7 @@ def get_driver(request, *args):
     return webdriver.Firefox(options=options)
 
 
-def get_data_from_csv(path_to_csv):
+def get_data_from_csv(path_to_csv, stop_on_empty=True):
     import csv
     imported_data = []
     if not os.path.isfile(path_to_csv):
@@ -26,11 +26,11 @@ def get_data_from_csv(path_to_csv):
             added = False
             not_empty = False
             for i, k in enumerate(row):
-                if len(k) < 1 and i > 0:
+                if len(k) < 1 and i > 0 and stop_on_empty:
                     imported_data.append(row[:i])
                     added = True
                     break
-                elif i == 0 and len(k) < 1:
+                elif i == 0 and len(k) < 1 and stop_on_empty:
                     break
                 else:
                     not_empty = True
@@ -43,3 +43,19 @@ def cookie_clicker(driver):
     cookies = driver.find_elements(By.ID, "cookie_accept")
     if len(cookies) > 0:
         cookies[0].click()
+
+
+def parse_csv_to_objects(csv_data):
+    naming = {}
+    resulting_objects = []
+    for i, row in enumerate(csv_data):
+        object = {}
+        for j, cell in enumerate(row):
+            if i == 0 and len(cell) > 0:
+                naming[j] = cell
+            elif i > 0 and j in naming and len(cell) > 0:
+                object[naming[j]] = cell
+        if len(object) > 0:
+            resulting_objects.append(object)
+
+    return resulting_objects

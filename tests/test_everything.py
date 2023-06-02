@@ -1,6 +1,6 @@
 import pytest
 import util
-from tests.Authentication import Authentication
+from tests.Account import Account
 from tests.Bucket import Bucket
 from tests.Search import Search
 
@@ -14,7 +14,7 @@ def shared_data(request):
 
 @pytest.mark.run(order=1)
 def test_login_from_main_page(driver):
-    assert Authentication().test_login_from_main_page(driver)
+    assert Account().test_login_from_main_page(driver)
 
 
 @pytest.mark.run(order=2)
@@ -43,3 +43,23 @@ def test_search_by_csv_provided_data(driver, path_to_csv):
     csv_data = util.get_data_from_csv(path_to_csv)
     for row in csv_data:
         assert Search().test_search_by(driver, row[0], row[1:])
+
+
+def test_address_change_success_reported(driver):
+    assert Account().test_address_change(driver)
+
+
+def test_name_cant_change_contains_digits(driver):
+    assert Account().test_name_change_contains_digits(driver)
+
+
+def test_mail_is_mail_on_change(driver):
+    assert Account().test_change_mail(driver)
+
+
+@pytest.mark.parametrize("path_to_csv", ["data/personal_info.csv", "tests/data/personal_info.csv"])
+def test_batched_account_info_change(driver, path_to_csv):
+    csv_data = util.get_data_from_csv(path_to_csv, False)
+    objects = util.parse_csv_to_objects(csv_data)
+    for object in objects:
+        assert Account().test_change_personal_info(driver, object)

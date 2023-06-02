@@ -1,12 +1,12 @@
-from selenium.webdriver.support.wait import WebDriverWait
 
 import util
 import pytest
 import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.wait import WebDriverWait
 
-from tests.Authentication import Authentication
+from tests.Account import Account
 
 
 class Bucket:
@@ -26,7 +26,7 @@ class Bucket:
         if driver is None:
             return False
 
-        if not Authentication.is_authenticated(driver):
+        if not Account.is_authenticated(driver):
             return False
 
         self.open_product_page(driver, remote_url)
