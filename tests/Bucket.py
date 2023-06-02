@@ -145,6 +145,9 @@ class Bucket:
         self.open_product_page(driver, self.remote_url)
         quantity = self.get_product_quantity(driver)
         self.selectAmount(driver, quantity + 123)
+        driver.find_element(By.CSS_SELECTOR, "body").click()  # emulate user activity, allowing js to update input
+        time.sleep(3)
+        driver.find_element(By.CSS_SELECTOR, "body").click()  # emulate user activity, allowing js to update input
         self.addToCart(driver)
 
         return len(driver.find_elements(By.CSS_SELECTOR, "span#product-availability > i.product-unavailable")) > 0

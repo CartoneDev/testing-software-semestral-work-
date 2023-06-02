@@ -1,5 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+import os
 
 DEBUG_ALWAYS_GUI = True
 
@@ -17,6 +18,8 @@ def get_driver(request, *args):
 def get_data_from_csv(path_to_csv):
     import csv
     imported_data = []
+    if not os.path.isfile(path_to_csv):
+        return []
     with open(path_to_csv, newline='') as csvfile:
         data = csv.reader(csvfile, delimiter=',', quotechar='|')
         for row in data:
