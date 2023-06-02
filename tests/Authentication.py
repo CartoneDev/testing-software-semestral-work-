@@ -34,6 +34,7 @@ class Authentication:
             password = self.password
 
         driver.get(remote_url)
+        util.cookie_clicker(driver)
         button = driver.find_element(By.CSS_SELECTOR, "div.user-info > a")
         button.click()
         mail_input_field = driver.find_element(By.CSS_SELECTOR, "input[name='email']")
@@ -44,14 +45,10 @@ class Authentication:
         password_input_field.send_keys(password)
         login_button = driver.find_element(By.ID, "submit-login")
         login_button.click()
-        self.cookie_clicker(driver)
         return self.is_authenticated(driver)
 
     @staticmethod
-    def cookie_clicker(driver):
-        cookies = driver.find_elements(By.ID, "cookie_accept")
-        if len(cookies) > 0:
-            cookies[0].click()
+
 
     @staticmethod
     def is_authenticated(driver):

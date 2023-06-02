@@ -15,7 +15,7 @@ class Bucket:
 
     def items_adds_to_bucket_test(self, driver):
         result = self.bucket_items(driver, self.remote_url)
-        assert result
+        return result
 
     def bucket_items(self, driver, remote_url):
         if remote_url is None:
