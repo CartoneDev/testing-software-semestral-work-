@@ -198,7 +198,8 @@ class Bucket:
         driver.find_element(By.CSS_SELECTOR, "div.checkout a.btn-primary").click()
         overlay = driver.find_element(By.CSS_SELECTOR, "div.myOverlayBlock")
         wait.until(EC.invisibility_of_element(overlay))
-        submitBtn = driver.find_element(By.XPATH,'//button[@name="confirm-addresses" and contains(text(), "Pokračovat")]')
+        submitBtn = driver.find_element(By.XPATH,
+                                        '//button[@name="confirm-addresses" and contains(text(), "Pokračovat")]')
         wait.until(EC.element_to_be_clickable(submitBtn))
         submitBtn.click()
         wait.until(EC.invisibility_of_element_located((By.CSS_SELECTOR, "div.myOverlayBlock")))
@@ -211,17 +212,18 @@ class Bucket:
         service = shipping["service"]
 
         if service == "post":
-            pass # default
+            pass  # default
         elif service == "zasilkovna":
             self.selectZasilkovna(driver, shipping["branch"])
-        # elif service == "ppl":
-        #     self.selectPPL(driver, shipping["branch"])
-        # elif service == "balik":
-        #     self.selectBalik(driver, shipping["branch"])
-        # elif service == "post_local":
-        #     self.selectLocalPost(driver, shipping["branch"])
+        elif service == "ppl":
+            self.selectPPL(driver, shipping["branch"])
+        elif service == "balik":
+            self.selectBalik(driver, shipping["branch"])
+        elif service == "post_local":
+            self.selectLocalPost(driver, shipping["branch"])
         time.sleep(0.3)
-        WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button[name=confirmDeliveryOption]")))
+        WebDriverWait(driver, 15).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "button[name=confirmDeliveryOption]")))
         opt = driver.find_element(By.CSS_SELECTOR, "button[name=confirmDeliveryOption]")
         driver.execute_script("arguments[0].click();", opt)  # bypass some interception
 
@@ -230,7 +232,7 @@ class Bucket:
         wait.until(EC.invisibility_of_element((By.CSS_SELECTOR, "div.myOverlayBlock")))
         c = driver.find_elements(By.CSS_SELECTOR, "div.myRippleBlock")
         while len(c) > 0 and c[0].is_displayed():
-              # meh, wait until won't do for this
+            # meh, wait until won't do for this
             time.sleep(0.1)
             c = driver.find_elements(By.CSS_SELECTOR, "div.myRippleBlock")
         time.sleep(1)
@@ -250,28 +252,117 @@ class Bucket:
         wait = WebDriverWait(driver, 15)
         wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "button#open-packeta-widget")))
         wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button#open-packeta-widget")))
-        driver.execute_script("arguments[0].click();", driver.find_element(By.CSS_SELECTOR, "button#open-packeta-widget"))  # bypass some interception
+        driver.execute_script("arguments[0].click();", driver.find_element(By.CSS_SELECTOR,
+                                                                           "button#open-packeta-widget"))  # bypass some interception
 
         frame_locator = (By.XPATH, "//iframe[@id='packeta-widget']")
         wait.until(EC.frame_to_be_available_and_switch_to_it(frame_locator))
-        cookie = '//button[@data-cookiefirst-action="accept" and @tabindex="1" and ' \
+        cookiePth = '//button[@data-cookiefirst-action="accept" and @tabindex="1" and ' \
                  '@data-cookiefirst-outline-accent-color="true" and @data-cookiefirst-button="primary"] '
 
 
-        wait.until(EC.element_to_be_clickable((By.XPATH, cookie)))
-        cookie = driver.find_element(By.XPATH, cookie)
-        cookie.click()
-
+        cookie = driver.find_elements(By.XPATH, cookiePth)
+        if len(cookie) > 0:
+            cookie[0].click()
+        wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "input#custom-autocomplete")))
         input = driver.find_element(By.CSS_SELECTOR, "input#custom-autocomplete")
+
         input.send_keys(branch)
         input.send_keys(Keys.DOWN)
         input.send_keys(Keys.ENTER)
-        wait.until(EC.visibility_of_any_elements_located((By.CSS_SELECTOR, 'div.branch-list div.branch-list-item:first-child')))
+        cookie = driver.find_elements(By.XPATH, cookiePth)
+        if len(cookie) > 0:
+            cookie[0].click()
+        wait.until(EC.visibility_of_any_elements_located(
+            (By.CSS_SELECTOR, 'div.branch-list div.branch-list-item:first-child')))
+        cookie = driver.find_elements(By.XPATH, cookiePth)
+        if len(cookie) > 0:
+            cookie[0].click()
         branch_to_select = driver.find_element(By.CSS_SELECTOR, 'div.branch-list div.branch-list-item:first-child')
         branch_to_select.click()
+        while len(driver.find_elements(By.CSS_SELECTOR, "button#btn_select_branch")) == 0:
+            time.sleep(0.02)
         submit = driver.find_element(By.CSS_SELECTOR, 'div.select-container button#btn_select_branch')
         submit.click()
         driver.switch_to.default_content()
 
     def verifyOrderSuccess(self, driver):
         return len(driver.find_elements(By.CSS_SELECTOR, 'i.material-icons.rtl-no-flip.done')) > 0
+
+    def selectPPL(self, driver, delivery):
+        driver.find_element(By.CSS_SELECTOR, "input#delivery_option_37").click()
+        wait = WebDriverWait(driver, 15)
+        wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "span.selection > span > span")))
+        wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "span.selection > span > span")))
+        driver.find_element(By.CSS_SELECTOR, "span.selection > span > span").click()
+        wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "input.select2-search__field")))
+
+        input_field = driver.find_element(By.CSS_SELECTOR, "input.select2-search__field")
+        input_field.send_keys(delivery)
+        input_field.send_keys(Keys.ENTER)
+
+    def selectBalik(self, driver, delivery_address):
+        driver.find_element(By.CSS_SELECTOR, "input#delivery_option_34").click()
+        wait = WebDriverWait(driver, 15)
+        wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "span.selection > span > span")))
+        wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "span.selection > span > span")))
+
+        while len(driver.find_elements(By.CSS_SELECTOR, "span.selection div.address")) == 0:
+            driver.find_element(By.CSS_SELECTOR, "span.selection > span > span").click()
+            wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "input.select2-search__field")))
+            input_field = driver.find_element(By.CSS_SELECTOR, "input.select2-search__field")
+            input_field.send_keys("!@#DSQSEARCHNOTSEARCHNOTSEARCHNOT")
+            input_field.clear()
+            input_field.send_keys(delivery_address)
+            result_list_locator = (By.CSS_SELECTOR, '.select2-results__options li.select2-results__option')
+            wait.until(EC.presence_of_all_elements_located(result_list_locator))
+            input_field.send_keys(Keys.ENTER)
+            time.sleep(0.123)
+
+    def selectLocalPost(self, driver, param):
+        driver.find_element(By.CSS_SELECTOR, "input#delivery_option_17").click()
+        wait = WebDriverWait(driver, 15)
+        wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "span.selection > span > span")))
+        wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "span.selection > span > span")))
+        driver.execute_script("arguments[0].scrollIntoView();", driver.find_element(By.CSS_SELECTOR,
+                                                                                    "span.selection > span > span"))
+        driver.find_element(By.CSS_SELECTOR, "span.selection > span > span").click()
+
+        wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "input.select2-search__field")))
+
+        while not self.addressSelected(driver, param):
+            input_field = self.find_or_create_input(driver)
+            input_field.send_keys(param)
+            while not self.first_option_for_selection_contains(driver, param):
+                time.sleep(0.123)
+            self.select_first_option(driver)
+
+    def addressSelected(self, driver, param):
+        return len(driver.find_elements(By.CSS_SELECTOR, "span.selection div.address")) > 0
+
+    def find_or_create_input(self, driver):
+        elems = driver.find_elements(By.CSS_SELECTOR, "input.select2-search__field")
+        if len(elems) > 0:
+            return elems[0]
+        else:
+            driver.find_element(By.CSS_SELECTOR, "span.selection > span > span").click()
+            WebDriverWait(driver, 30).until(
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "input.select2-search__field")))
+            return driver.find_element(By.CSS_SELECTOR, "input.select2-search__field")
+
+    def first_option_for_selection_contains(self, driver, param):
+        result_list_locator = (By.CSS_SELECTOR, '.select2-results__options li.select2-results__option')
+        wait = WebDriverWait(driver, 30)
+        wait.until(EC.presence_of_all_elements_located(result_list_locator))
+        first_option = driver.find_element(By.CSS_SELECTOR,
+                                           '.select2-results__options li.select2-results__option:first-child')
+        text = first_option.text
+        return param.lower() in text.lower()
+
+    def select_first_option(self, driver):
+        wait = WebDriverWait(driver, 30)
+        first_option = driver.find_element(By.CSS_SELECTOR,
+                                           '.select2-results__options li.select2-results__option:first-child')
+        wait.until(EC.element_to_be_clickable(first_option))
+
+        first_option.click()
