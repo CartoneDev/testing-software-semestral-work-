@@ -76,6 +76,11 @@ class Account:
         address_input = driver.find_element(By.CSS_SELECTOR, "input[name='address1']")
         address_input.clear()
         address_input.send_keys(new_address)
+        psc = driver.find_element(By.CSS_SELECTOR, "input[name='postcode']")
+        psc_val = psc.get_attribute("value")
+        psc.clear()
+        psc_new_val = psc_val[:3].strip() + " " + psc_val[3:].strip()
+        psc.send_keys(psc_new_val)
         save_button = driver.find_element(By.CSS_SELECTOR, "button.btn.btn-primary.float-xs-right")
         save_button.click()
         return len(driver.find_elements(By.CSS_SELECTOR, 'article.alert.alert-success[data-alert="success"]')) > 0

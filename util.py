@@ -2,7 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 import os
 
-DEBUG_ALWAYS_GUI = True
+DEBUG_ALWAYS_GUI = False
 
 
 def get_driver(request, *args):

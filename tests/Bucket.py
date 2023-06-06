@@ -249,7 +249,7 @@ class Bucket:
 
     def selectZasilkovna(self, driver, branch):
         driver.find_element(By.CSS_SELECTOR, "input#delivery_option_32").click()
-        wait = WebDriverWait(driver, 15)
+        wait = WebDriverWait(driver, 35)
         wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "button#open-packeta-widget")))
         wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button#open-packeta-widget")))
         driver.execute_script("arguments[0].click();", driver.find_element(By.CSS_SELECTOR,
