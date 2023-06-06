@@ -63,3 +63,13 @@ def test_batched_account_info_change(driver, path_to_csv):
     objects = util.parse_csv_to_objects(csv_data)
     for object in objects:
         assert Account().test_change_personal_info(driver, object)
+
+
+@pytest.mark.parametrize("path_to_csv", ["data/shipping.csv", "tests/data/shipping.csv"])
+def test_different_shipping_methods(driver, path_to_csv):
+    csv_data = util.get_data_from_csv(path_to_csv, False)
+    objects = util.parse_csv_to_objects(csv_data)
+    for shipping in objects:
+        if shipping["service"] != "zasilkovna":
+            continue
+        assert Bucket().test_different_shipping_methods(driver, shipping)

@@ -1,3 +1,6 @@
+import random
+
+from selenium.webdriver import Keys
 
 import util
 import pytest
@@ -5,6 +8,9 @@ import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
+import selenium.webdriver.support.ui as ui
+import selenium
+import selenium.webdriver.common.alert
 
 from tests.Account import Account
 
@@ -53,7 +59,7 @@ class Bucket:
 
     @staticmethod
     def selectProductSize(driver, size):
-        # select size
+        WebDriverWait(driver, 15).until(EC.visibility_of_element_located((By.CSS_SELECTOR, "select[name='group[1]']")))
         size_select = driver.find_element(By.CSS_SELECTOR, "select[name='group[1]']")
         size_select.click()
         size_select.find_element(By.XPATH, "//option[. = '" + size + "']").click()
@@ -167,3 +173,105 @@ class Bucket:
         driver.find_element(By.XPATH, xpath).click()
         quantity = driver.find_element(By.CSS_SELECTOR, "div.product-quantities > span").get_attribute("data-stock")
         return int(quantity)
+
+    def test_different_shipping_methods(self, driver, shipping):
+        acc = Account()
+        acc.ensure_login(driver)
+        if not acc.is_authenticated(driver):
+            return False
+        self.open_product_page(driver, self.remote_url)
+        self.selectProductSize(driver, "M")
+        self.selectAmount(driver, random.randint(1, 3))
+        self.addToCart(driver)
+        wait = WebDriverWait(driver, 15)
+
+        driver.execute_script("Object.defineProperty(navigator, 'geolocation', {value: {}});")
+
+        # Refresh the page to trigger the location access prompt
+        driver.refresh()
+
+        cart_btn = driver.find_element(By.CSS_SELECTOR, "div.blockcart a")
+        wait.until(EC.element_to_be_clickable(cart_btn))
+        driver.execute_script("arguments[0].scrollIntoView();", cart_btn)
+        driver.execute_script("arguments[0].click();", cart_btn)  # bypass modal disappearing tho blocking cart issue
+        wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.checkout a.btn-primary")))
+        driver.find_element(By.CSS_SELECTOR, "div.checkout a.btn-primary").click()
+        overlay = driver.find_element(By.CSS_SELECTOR, "div.myOverlayBlock")
+        wait.until(EC.invisibility_of_element(overlay))
+        submitBtn = driver.find_element(By.XPATH,'//button[@name="confirm-addresses" and contains(text(), "Pokračovat")]')
+        wait.until(EC.element_to_be_clickable(submitBtn))
+        submitBtn.click()
+        wait.until(EC.invisibility_of_element_located((By.CSS_SELECTOR, "div.myOverlayBlock")))
+        time.sleep(0.2)
+        self.selectDelivery(driver, shipping)
+        self.selectPaymentAndPay(driver)
+        return self.verifyOrderSuccess(driver)
+
+    def selectDelivery(self, driver, shipping):
+        service = shipping["service"]
+
+        if service == "post":
+            pass # default
+        elif service == "zasilkovna":
+            self.selectZasilkovna(driver, shipping["branch"])
+        # elif service == "ppl":
+        #     self.selectPPL(driver, shipping["branch"])
+        # elif service == "balik":
+        #     self.selectBalik(driver, shipping["branch"])
+        # elif service == "post_local":
+        #     self.selectLocalPost(driver, shipping["branch"])
+        time.sleep(0.3)
+        WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button[name=confirmDeliveryOption]")))
+        opt = driver.find_element(By.CSS_SELECTOR, "button[name=confirmDeliveryOption]")
+        driver.execute_script("arguments[0].click();", opt)  # bypass some interception
+
+    def selectPaymentAndPay(self, driver):
+        wait = WebDriverWait(driver, 20)
+        wait.until(EC.invisibility_of_element((By.CSS_SELECTOR, "div.myOverlayBlock")))
+        c = driver.find_elements(By.CSS_SELECTOR, "div.myRippleBlock")
+        while len(c) > 0 and c[0].is_displayed():
+              # meh, wait until won't do for this
+            time.sleep(0.1)
+            c = driver.find_elements(By.CSS_SELECTOR, "div.myRippleBlock")
+        time.sleep(1)
+
+        while len(driver.find_elements(By.CSS_SELECTOR, "input#payment-option-1")) == 0:
+            time.sleep(0.1)
+        time.sleep(1)
+        opt = driver.find_element(By.CSS_SELECTOR, "input#payment-option-1")
+        driver.execute_script("arguments[0].click();", opt)  # bypass some interception
+        opt = driver.find_element(By.XPATH, "//input[@id='conditions_to_approve[terms-and-conditions]']")
+        driver.execute_script("arguments[0].click();", opt)  # bypass some interception
+        opt = driver.find_element(By.CSS_SELECTOR, "div#payment-confirmation button")
+        driver.execute_script("arguments[0].click();", opt)  # bypass some interception
+
+    def selectZasilkovna(self, driver, branch):
+        driver.find_element(By.CSS_SELECTOR, "input#delivery_option_32").click()
+        wait = WebDriverWait(driver, 15)
+        wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "button#open-packeta-widget")))
+        wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button#open-packeta-widget")))
+        driver.execute_script("arguments[0].click();", driver.find_element(By.CSS_SELECTOR, "button#open-packeta-widget"))  # bypass some interception
+
+        frame_locator = (By.XPATH, "//iframe[@id='packeta-widget']")
+        wait.until(EC.frame_to_be_available_and_switch_to_it(frame_locator))
+        cookie = '//button[@data-cookiefirst-action="accept" and @tabindex="1" and ' \
+                 '@data-cookiefirst-outline-accent-color="true" and @data-cookiefirst-button="primary"] '
+
+
+        wait.until(EC.element_to_be_clickable((By.XPATH, cookie)))
+        cookie = driver.find_element(By.XPATH, cookie)
+        cookie.click()
+
+        input = driver.find_element(By.CSS_SELECTOR, "input#custom-autocomplete")
+        input.send_keys(branch)
+        input.send_keys(Keys.DOWN)
+        input.send_keys(Keys.ENTER)
+        wait.until(EC.visibility_of_any_elements_located((By.CSS_SELECTOR, 'div.branch-list div.branch-list-item:first-child')))
+        branch_to_select = driver.find_element(By.CSS_SELECTOR, 'div.branch-list div.branch-list-item:first-child')
+        branch_to_select.click()
+        submit = driver.find_element(By.CSS_SELECTOR, 'div.select-container button#btn_select_branch')
+        submit.click()
+        driver.switch_to.default_content()
+
+    def verifyOrderSuccess(self, driver):
+        return len(driver.find_elements(By.CSS_SELECTOR, 'i.material-icons.rtl-no-flip.done')) > 0

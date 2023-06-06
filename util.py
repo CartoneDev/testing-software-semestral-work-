@@ -9,6 +9,10 @@ def get_driver(request, *args):
     if not request.config.getoption("--GUI"):
         args = args + ("--headless",)
     options = webdriver.FirefoxOptions()
+    options.set_preference("geo.enabled", True)
+    options.set_preference("geo.provider.use_corelocation", True)
+    options.set_preference("geo.prompt.testing", True)
+    options.set_preference("geo.prompt.testing.allow", True)
     if "--headless" in args and not DEBUG_ALWAYS_GUI:
         options.add_argument("--headless")
         options.add_argument("--no-sandbox")
@@ -59,3 +63,7 @@ def parse_csv_to_objects(csv_data):
             resulting_objects.append(object)
 
     return resulting_objects
+
+
+def switch_to_iframe(driver, iframe):
+    return driver.switch_to.frame(iframe)
