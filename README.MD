@@ -1,4 +1,5 @@
 ## Webshop selenium testing 
+### run
 This is a selenium testing project for a webshop. The project is written in Python3 and selenium 4 using Py-Test as a testing framework.
 
 Program runs py calling "pytest [-v] [--GUI] util.py tests/"
@@ -15,3 +16,13 @@ it also requires a data folder with shipping.csv, personal_info.csv, search.csv 
 ### install
 pip3 install -r requirements.txt
 requires python3.8 or higher
+also requires a mozilla installed for selenium webdriver
+
+### structure
+<br>utils.py - contains helpers
+
+<br>Account.py - contains all profile related tests and helper logic, such as login
+
+<br>Bucket.py - contains all purchase, shopping cart etc logic and tests
+
+<br>Search.py - contains serach test logic

@@ -294,12 +294,12 @@ class Bucket:
         wait = WebDriverWait(driver, 15)
         wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "span.selection > span > span")))
         wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "span.selection > span > span")))
-        driver.find_element(By.CSS_SELECTOR, "span.selection > span > span").click()
-        wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "input.select2-search__field")))
-
-        input_field = driver.find_element(By.CSS_SELECTOR, "input.select2-search__field")
-        input_field.send_keys(delivery)
-        input_field.send_keys(Keys.ENTER)
+        while not self.addressSelected(driver, delivery):
+            input_field = self.find_or_create_input(driver)
+            input_field.send_keys(delivery)
+            while not self.first_option_for_selection_contains(driver, delivery):
+                time.sleep(0.123)
+            self.select_first_option(driver)
 
     def selectBalik(self, driver, delivery_address):
         driver.find_element(By.CSS_SELECTOR, "input#delivery_option_34").click()
@@ -309,7 +309,8 @@ class Bucket:
 
         while len(driver.find_elements(By.CSS_SELECTOR, "span.selection div.address")) == 0:
             driver.find_element(By.CSS_SELECTOR, "span.selection > span > span").click()
-            wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "input.select2-search__field")))
+            while len(driver.find_elements(By.CSS_SELECTOR, "input.select2-search__field")) == 0:
+                time.sleep(0.123)
             input_field = driver.find_element(By.CSS_SELECTOR, "input.select2-search__field")
             input_field.send_keys("!@#DSQSEARCHNOTSEARCHNOTSEARCHNOT")
             input_field.clear()
@@ -332,15 +333,19 @@ class Bucket:
 
         while not self.addressSelected(driver, param):
             input_field = self.find_or_create_input(driver)
+            input_field.clear()
             input_field.send_keys(param)
             while not self.first_option_for_selection_contains(driver, param):
                 time.sleep(0.123)
             self.select_first_option(driver)
 
-    def addressSelected(self, driver, param):
-        return len(driver.find_elements(By.CSS_SELECTOR, "span.selection div.address")) > 0
+    @staticmethod
+    def addressSelected(driver, param):
+        return len(driver.find_elements(By.CSS_SELECTOR, "span.selection div.address")) \
+               + len(driver.find_elements(By.CSS_SELECTOR, "span.selection span.Street")) > 0
 
-    def find_or_create_input(self, driver):
+    @staticmethod
+    def find_or_create_input(driver):
         elems = driver.find_elements(By.CSS_SELECTOR, "input.select2-search__field")
         if len(elems) > 0:
             return elems[0]
@@ -350,19 +355,29 @@ class Bucket:
                 EC.visibility_of_element_located((By.CSS_SELECTOR, "input.select2-search__field")))
             return driver.find_element(By.CSS_SELECTOR, "input.select2-search__field")
 
-    def first_option_for_selection_contains(self, driver, param):
+    @staticmethod
+    def first_option_for_selection_contains(driver, param):
         result_list_locator = (By.CSS_SELECTOR, '.select2-results__options li.select2-results__option')
         wait = WebDriverWait(driver, 30)
         wait.until(EC.presence_of_all_elements_located(result_list_locator))
-        first_option = driver.find_element(By.CSS_SELECTOR,
-                                           '.select2-results__options li.select2-results__option:first-child')
-        text = first_option.text
+        options = driver.find_elements(By.CSS_SELECTOR,
+                                           '.select2-results__options li.select2-results__option')
+        if len(options) == 0:
+            return False
+        options = driver.find_elements(By.CSS_SELECTOR,
+                                           '.select2-results__options li.select2-results__option')
+        if len(options) == 0:
+            return False
+        text = options[0].text
         return param.lower() in text.lower()
 
-    def select_first_option(self, driver):
+    @staticmethod
+    def select_first_option(driver):
         wait = WebDriverWait(driver, 30)
-        first_option = driver.find_element(By.CSS_SELECTOR,
-                                           '.select2-results__options li.select2-results__option:first-child')
-        wait.until(EC.element_to_be_clickable(first_option))
+        first_option = driver.find_elements(By.CSS_SELECTOR,
+                                           '.select2-results__options li.select2-results__option')
+        if len(first_option) == 0:
+            return False
+        wait.until(EC.element_to_be_clickable(first_option[0]))
 
-        first_option.click()
+        first_option[0].click()

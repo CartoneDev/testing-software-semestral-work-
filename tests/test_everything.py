@@ -70,6 +70,6 @@ def test_different_shipping_methods(driver, path_to_csv):
     csv_data = util.get_data_from_csv(path_to_csv, False)
     objects = util.parse_csv_to_objects(csv_data)
     for shipping in objects:
-        if shipping["service"] != "zasilkovna":
-            continue
+        # if "post_local" not in shipping['service']:
+        #     continue
         assert Bucket().test_different_shipping_methods(driver, shipping)
